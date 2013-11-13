@@ -1,0 +1,5 @@
+CUR_TC=~/android/test/4.9.3-2015.01.20150117.CR83/bin/
+
+### cleaning
+ARCH=arm CROSS_COMPILE=${CUR_TC}arm-cortex_a15-linux-gnueabihf- make distclean
+

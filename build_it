@@ -1,0 +1,54 @@
+CUR_TC=~/android/test/4.9.3-2015.01.20150117.CR83/bin/
+
+### compile kernel
+ARCH=arm CROSS_COMPILE=${CUR_TC}arm-cortex_a15-linux-gnueabihf- make mod_rhine_defconfig
+ARCH=arm CROSS_COMPILE=${CUR_TC}arm-cortex_a15-linux-gnueabihf- make xconfig
+cp ./.config arch/arm/configs/mod_rhine_defconfig
+ARCH=arm CROSS_COMPILE=${CUR_TC}arm-cortex_a15-linux-gnueabihf- make CONFIG_DEBUG_SECTION_MISMATCH=y -j8
+
+echo "checking for compiled kernel..."
+if [ -f arch/arm/boot/zImage ]
+then
+
+echo "generating device tree..."
+../cm_rhine/dtbTool -o ../cm_rhine/dt.img -s 2048 -p ./scripts/dtc/ ./arch/arm/boot/
+
+### copy zImage
+cp arch/arm/boot/zImage ../cm_rhine/.
+
+if [ -d ../cm_rhine/boot.img-ramdisk/multirom/ ]
+then
+#Copy ExFAT
+#cp drivers/exfat/exfat_core.ko ../cm_rhine/boot.img-ramdisk/multirom/lib/
+#cp drivers/exfat/exfat_fs.ko ../cm_rhine/boot.img-ramdisk/multirom/lib/
+
+#Copy Peripheral Driver
+cp drivers/hid/hid-sony.ko ../cm_rhine/boot.img-ramdisk/multirom/lib/
+
+#Copy Gamma Driver
+cp arch/arm/mach-msm/msm_kcal_ctrl.ko ../cm_rhine/boot.img-ramdisk/multirom/lib/
+
+else
+
+#Copy ExFAT
+cp fs/exfat/exfat.ko ../cm_rhine/boot.img-ramdisk/sbin/libs/
+
+#Copy WiFi
+cp drivers/staging/prima/wlan.ko ../topackcm/system/lib/modules/pronto/pronto_wlan.ko
+cp drivers/staging/prima/wlan.ko ../topackcm/system/lib/modules/wlan.ko
+cp drivers/staging/prima/firmware_bin/* ../topackcm/system/etc/firmware/wlan/prima/
+
+#Copy FMRadio
+cp drivers/media/radio/radio-iris-transport.ko ../topackcm/system/lib/modules/
+
+#Copy DVB-T modules
+cp drivers/media/platform/msm/dvb/adapter/mpq-adapter.ko ../topackcm/system/lib/modules/
+cp drivers/media/platform/msm/dvb/demux/mpq-dmx-hw-plugin.ko ../topackcm/system/lib/modules/
+
+fi
+
+cd ../cm_rhine/
+
+~/android/cm_rhine/make_it.sh
+
+fi
